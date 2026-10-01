@@ -1,4 +1,3 @@
-import Header from "./Header";
 import background from "../assets/bg-netflix.jpg";
 import { Link } from "react-router-dom";
 import logo from "../assets/Netflix_Logo_PMS.png";

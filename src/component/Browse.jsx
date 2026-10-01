@@ -1,4 +1,3 @@
-import React from 'react'
 import Header from './Header'
 import useNowPlaying from '../hook/useNowPlaying'
 import MainContainer from './MainContainer';
@@ -10,9 +9,9 @@ const Browse = () => {
 
   return (
     <div>
-      <Header/>
-      <MainContainer/>
-      <SecondaryContainer/>
+        <Header/>
+        <MainContainer/>
+        <SecondaryContainer/>
     </div>
   )
 }

@@ -3,11 +3,11 @@ import Body from "./component/Body";
 import appStore from "./utlis/appStore";
 
 function App() {
-  return (
-    <Provider store={appStore}>
-      <Body/>
-    </Provider>
-  );
+    return (
+        <Provider store={appStore}>
+        <Body/>
+        </Provider>
+    );
 }
 
 export default App;
