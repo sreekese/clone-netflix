@@ -1,72 +1,139 @@
-import { useRef, useState } from 'react';
-import Header from './Header';
-import background from "../assets/bg-netflix.jpg"; 
-import { checkValidateForm } from '../utlis/validate';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth } from "../utlis/firebase";
-import { addUser } from '../utlis/userSlice';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile,
+} from 'firebase/auth';
 import { useDispatch } from 'react-redux';
+import Header from './Header';
+import { auth } from '../utlis/firebase';
+import { addUser } from '../utlis/userSlice';
+import { setCreatingAccount, setSessionNotice } from '../utlis/sessionSlice';
+import { authErrorMessage, checkValidateForm } from '../utlis/validate';
 
-const Login = () => {
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
-
-    const [islogin, setIslogin] =  useState(true);
-    const [errorMessage, setErrorMessage] = useState();
-    const email = useRef(null);
-    const password = useRef(null);
-    const name = useRef(null);
-
-    const handlechageform = () => {
-        setIslogin(!islogin);
+export default function Login() {
+  const [params, setParams] = useSearchParams();
+  const isSignUp = params.get('mode') === 'signup';
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const dispatch = useDispatch();
+  async function handleSubmit(event) {
+    event.preventDefault();
+    if (busy) return;
+    const values = new FormData(event.currentTarget);
+    const email = values.get('email').trim();
+    const password = values.get('password');
+    const name = values.get('name') || '';
+    const message = checkValidateForm(email, password, isSignUp, name);
+    if (message) {
+      setError(message);
+      return;
     }
-
-    const handleAuthError = (error) => {
-        setErrorMessage(`${error.code}-${error.message}`);
-    };
-
-    const handlesubmit = () => {
-        const message = checkValidateForm(email.current.value, password.current.value);
-        setErrorMessage(message);
-        if(message) return;
-        
-        if(!islogin) {
-            const fullName = name.current.value.trim();
-            createUserWithEmailAndPassword(auth, email.current.value, password.current.value)
-                .then(({ user }) => updateProfile(user, { displayName: fullName })
-                    .then(() => {
-                        dispatch(addUser({ uid: user.uid, email: user.email, displayName: fullName }));
-                        navigate("/browse");
-                    })
-                )
-                .catch(handleAuthError);
-        } else {
-            signInWithEmailAndPassword(auth, email.current.value, password.current.value)
-                .catch(handleAuthError);
+    if (!auth) {
+      setError(
+        'Authentication is not configured. Follow the setup instructions in README.md.',
+      );
+      return;
+    }
+    setError('');
+    setBusy(true);
+    if (isSignUp) dispatch(setCreatingAccount(true));
+    try {
+      if (isSignUp) {
+        const { user } = await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password,
+        );
+        let displayName = name.trim();
+        try {
+          await updateProfile(user, { displayName });
+        } catch {
+          displayName = user.displayName || null;
+          dispatch(
+            setSessionNotice(
+              'Your account was created, but your display name could not be saved.',
+            ),
+          );
         }
+        dispatch(addUser({ uid: user.uid, email: user.email, displayName }));
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+      }
+    } catch (err) {
+      setError(authErrorMessage(err));
+    } finally {
+      setBusy(false);
+      dispatch(setCreatingAccount(false));
     }
-
-    return (
-    <div className='relative w-full h-screen'>
-        <div className='bg-cover'>
-            <img className='absolute w-full h-full object-cover bg-blend-overlay' src={background} alt='netflix-bg'></img>
-            <div className="absolute w-full h-full bg-black opacity-80"></div>
-        </div>
-        <Header />
-        <div className="absolute mx-auto right-0 left-0 align-middle w-3/12 bg-black bg-opacity-50">
-            <form onSubmit={(e) => e.preventDefault()}className="relative px-12 py-4">
-                <h1 className="text-white font-bold text-3xl py-2 my-2">{islogin ? "Sign In" : "Sign Up"}</h1>
-                {!islogin && (<input ref={name} className="rounded-md p-2 my-2 w-full bg-transparent border-gray-100 border" type="text" placeholder="Full Name"/>)}
-                <input ref={email} className="text-white rounded-md p-2 my-2 w-full bg-transparent border-gray-100 border" type="email" placeholder="Email Address"/>
-                <input ref={password} className="text-white rounded-md p-2 my-2 w-full bg-transparent border-gray-100 border" type="password" placeholder="Password"/>
-                <p className="text-red-700 font-bold">{errorMessage}</p>
-                <button onClick={handlesubmit} className="rounded-md w-full my-4 text-white bg-red-600 px-4 py-2">{islogin ? "Sign In" : "Sign Up"}</button>
-                <p onClick={handlechageform} className="text-white my-4 cursor-pointer">New to Netflix? {islogin ? "Sign Up" : "Sign In"} now.</p>
-            </form>
-        </div>
+  }
+  return (
+    <div className="welcome-page">
+      <Header />
+      <main className="auth-main">
+        <form
+          className="auth-form"
+          onSubmit={handleSubmit}
+          noValidate
+          aria-label={isSignUp ? 'Sign up' : 'Sign in'}
+        >
+          <h1>{isSignUp ? 'Create an account' : 'Sign in'}</h1>
+          <p className="muted">Your next favorite movie is waiting.</p>
+          <fieldset disabled={busy}>
+            {isSignUp && (
+              <label>
+                Full name
+                <input
+                  name="name"
+                  autoComplete="name"
+                  required
+                  maxLength={100}
+                />
+              </label>
+            )}
+            <label>
+              Email address
+              <input name="email" type="email" autoComplete="email" required />
+            </label>
+            <label>
+              Password
+              <input
+                name="password"
+                type="password"
+                autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                required
+                aria-describedby={isSignUp ? 'password-hint' : undefined}
+              />
+            </label>
+            {isSignUp && (
+              <p id="password-hint" className="muted">
+                Use at least 8 characters.
+              </p>
+            )}
+            {error && (
+              <p role="alert" className="error">
+                {error}
+              </p>
+            )}
+            <button className="button full" type="submit">
+              {busy ? 'Please wait…' : isSignUp ? 'Sign up' : 'Sign in'}
+            </button>
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => {
+                setParams(isSignUp ? {} : { mode: 'signup' });
+                setError('');
+              }}
+            >
+              {isSignUp
+                ? 'Already have an account? Sign in'
+                : 'New here? Create an account'}
+            </button>
+          </fieldset>
+        </form>
+      </main>
     </div>
-    )
+  );
 }
-
-export default Login

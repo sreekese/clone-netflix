@@ -1,12 +1,8 @@
-import { configureStore } from "@reduxjs/toolkit";
-import userReducer from "./userSlice";
-import moviesReducer from "./moviesSlice";
+import { configureStore } from '@reduxjs/toolkit';
+import user from './userSlice';
+import movies from './moviesSlice';
+import session from './sessionSlice';
 
-const appStore = configureStore({
-    reducer:{
-        user: userReducer,
-        movies: moviesReducer,
-    },
-});
-
-export default appStore;
+export const createAppStore = (preloadedState) =>
+  configureStore({ reducer: { user, movies, session }, preloadedState });
+export default createAppStore();
