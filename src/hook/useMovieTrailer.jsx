@@ -1,45 +1,27 @@
-import { useEffect } from 'react'
-import { useDispatch } from 'react-redux';
-import { addmovietrailer } from '../utlis/moviesSlice';
-import { API_OPTIONS, TMDB_API_BASE_URL } from '../utlis/constant';
+import { useEffect, useState } from 'react';
+import { fetchMovieData, selectTrailer } from '../services/movies';
 
-const useMovieTrailer = (videoid) => {
-    const dispatch = useDispatch();
-
-    useEffect(() => {
-        if (!videoid) {
-            dispatch(addmovietrailer(null));
-            return;
-        }
-
-        const controller = new AbortController();
-        dispatch(addmovietrailer(null));
-
-        const fetchTrailer = async () => {
-            try {
-                const response = await fetch(
-                    `${TMDB_API_BASE_URL}/3/movie/${videoid}/videos`,
-                    { ...API_OPTIONS, signal: controller.signal }
-                );
-                if (!response.ok) {
-                    throw new Error(`TMDB trailer request failed with status ${response.status}`);
-                }
-
-                const data = await response.json();
-                const videos = Array.isArray(data.results) ? data.results : [];
-                const trailer = videos.find((video) => video.type === 'Trailer') ?? videos[0] ?? null;
-                dispatch(addmovietrailer(trailer));
-            } catch (error) {
-                if (!controller.signal.aborted) {
-                    console.error("Unable to load movie trailer", error);
-                    dispatch(addmovietrailer(null));
-                }
-            }
-        };
-
-        fetchTrailer();
-        return () => controller.abort();
-    }, [dispatch, videoid]);
+export default function useMovieTrailer(movieId) {
+  const [result, setResult] = useState(null);
+  useEffect(() => {
+    if (!movieId) return;
+    const controller = new AbortController();
+    fetchMovieData(`/movie/${movieId}/videos`, controller.signal)
+      .then((videos) => {
+        if (!controller.signal.aborted)
+          setResult({ movieId, trailer: selectTrailer(videos), error: null });
+      })
+      .catch(() => {
+        if (!controller.signal.aborted)
+          setResult({
+            movieId,
+            trailer: null,
+            error: 'Trailer could not be loaded.',
+          });
+      });
+    return () => controller.abort();
+  }, [movieId]);
+  return result?.movieId === movieId
+    ? { ...result, loading: false }
+    : { trailer: null, error: null, loading: Boolean(movieId) };
 }
-
-export default useMovieTrailer

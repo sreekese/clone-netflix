@@ -1,18 +1,28 @@
-import MovieList from './MovieList'
-import { useSelector } from 'react-redux'
+import { useSelector } from 'react-redux';
+import { MovieRowShimmer } from './Shimmer';
+import MovieList from './MovieList';
+import MovieCategory from './MovieCategory';
 
-const SecondaryContainer = () => {
-
-    const movies = useSelector((store) => store.movies);
-
-    return (
-        <div className='flex overflow-x-auto scrollbar-hide bg-black'>
-            <div className=''>
-                <MovieList title = {"Now Playing"} movies = {movies?.nowPlayingMovies} />
-
-            </div>
-        </div>
-    )
+const categories = [
+  { title: 'Trending this week', path: '/trending/movie/week?language=en-US' },
+  { title: 'Popular movies', path: '/movie/popular?language=en-US' },
+  { title: 'Top rated', path: '/movie/top_rated?language=en-US' },
+  { title: 'Coming soon', path: '/movie/upcoming?language=en-US' },
+];
+export default function SecondaryContainer({ onSelect }) {
+  const { nowPlayingMovies: movies, nowPlayingError } = useSelector(
+    (state) => state.movies,
+  );
+  return (
+    <>
+      {movies === null && !nowPlayingError ? (
+        <MovieRowShimmer title="Now playing" />
+      ) : (
+        <MovieList title="Now playing" movies={movies} onSelect={onSelect} />
+      )}
+      {categories.map((category) => (
+        <MovieCategory key={category.path} {...category} onSelect={onSelect} />
+      ))}
+    </>
+  );
 }
-
-export default SecondaryContainer;

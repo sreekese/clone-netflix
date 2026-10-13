@@ -1,10 +1,21 @@
+export const TMDB_API_BASE_URL =
+  import.meta.env.VITE_TMDB_API_BASE_URL || 'https://api.themoviedb.org';
 export const API_OPTIONS = {
-    method: 'GET',
-    headers: {
-        accept: 'application/json',
-        Authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIxZGQxMjUwODc5MzZhNDU0ZWY4NTBlZTAxZmM4ZmYzMiIsIm5iZiI6MTc0OTM0ODM4My43Niwic3ViIjoiNjg0NGYwMWZjMDUzM2Q5NThjMWVhMzZmIiwic2NvcGVzIjpbImFwaV9yZWFkIl0sInZlcnNpb24iOjF9.erigcAlXpvS0j_98v1iaj_Vx3SEEXfRSOXS25T4rGDw'
-    }
+  headers: {
+    accept: 'application/json',
+    ...(import.meta.env.VITE_TMDB_ACCESS_TOKEN
+      ? { Authorization: `Bearer ${import.meta.env.VITE_TMDB_ACCESS_TOKEN}` }
+      : {}),
+  },
 };
+export const IMG_POSTER_URL = 'https://image.tmdb.org/t/p/w342';
+export const IMG_BACKDROP_URL = 'https://image.tmdb.org/t/p/w1280';
 
-export const TMDB_API_BASE_URL = "/api/tmdb";
-export const IMG_POSTER_URL = "https://image.tmdb.org/t/p/w500/";
+export const posterSrcSet = (path) =>
+  [185, 342, 500]
+    .map((width) => `https://image.tmdb.org/t/p/w${width}${path} ${width}w`)
+    .join(', ');
+export const backdropSrcSet = (path) =>
+  [300, 780, 1280]
+    .map((width) => `https://image.tmdb.org/t/p/w${width}${path} ${width}w`)
+    .join(', ');
