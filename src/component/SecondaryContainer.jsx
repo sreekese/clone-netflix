@@ -1,4 +1,5 @@
 import { useSelector } from 'react-redux';
+import { MovieRowShimmer } from './Shimmer';
 import MovieList from './MovieList';
 import MovieCategory from './MovieCategory';
 
@@ -9,10 +10,16 @@ const categories = [
   { title: 'Coming soon', path: '/movie/upcoming?language=en-US' },
 ];
 export default function SecondaryContainer({ onSelect }) {
-  const movies = useSelector((state) => state.movies.nowPlayingMovies);
+  const { nowPlayingMovies: movies, nowPlayingError } = useSelector(
+    (state) => state.movies,
+  );
   return (
     <>
-      <MovieList title="Now playing" movies={movies} onSelect={onSelect} />
+      {movies === null && !nowPlayingError ? (
+        <MovieRowShimmer title="Now playing" />
+      ) : (
+        <MovieList title="Now playing" movies={movies} onSelect={onSelect} />
+      )}
       {categories.map((category) => (
         <MovieCategory key={category.path} {...category} onSelect={onSelect} />
       ))}

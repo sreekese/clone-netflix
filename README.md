@@ -54,3 +54,14 @@ Movie lists are kept in Redux and cleared on sign-out. Search is debounced; obso
 Discover movies and search sit below the banner. The catalog includes Now Playing, Trending This Week, Popular Movies, Top Rated, and Coming Soon, with independent loading and retry states. Movie details load genres, runtime, ratings, director, cast, languages, countries, production companies, budget, box office, a trailer, and related titles. Every movie opens at `/movie/:id`, supporting direct links and refreshes. Related titles navigate to their own detail pages. The header overlays the banner and provides an avatar menu with a profile page and sign-out. Detail trailers start through the player controls.
 
 Live Firebase/TMDB credentials and third-party availability are required for end-to-end use. TMDB supplies movie metadata; YouTube supplies trailers. This product is not endorsed or certified by TMDB.
+
+## Performance behavior
+
+- Pages load through React lazy imports with a shimmer fallback, so page-specific code is split into separate bundles.
+- Movie lists, search, trailers, and details share a five-minute in-memory response cache capped at 100 entries. Concurrent identical requests share one fetch; cancellation affects only the departing consumer until no consumers remain. Failed and abandoned requests are not cached. The cache stores public movie metadata, not account data, and is reset on a full page reload.
+- Posters and backdrops use responsive TMDB image sizes instead of original-resolution backdrops. Poster and cast images load lazily.
+- Lower catalog sections begin loading within 400 pixels of the viewport. Browsers without IntersectionObserver fall back to immediate loading.
+- Banner playback and rotation stop when the banner is offscreen or the document is hidden. Returning to it recreates the video player, restarting its preview.
+- Search state is isolated from the banner and catalog, so typing does not rerender those sibling sections. Existing search debouncing and request cancellation remain in place.
+
+To measure performance, build and preview the production app, then use Lighthouse with mobile throttling and React DevTools Profiler. Compare first navigation, repeat navigation, typing, and scrolling with both cold and warm caches. Automated tests verify the optimization behavior; they do not establish real-device loading times or Core Web Vitals scores.

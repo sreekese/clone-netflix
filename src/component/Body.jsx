@@ -1,48 +1,49 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useDispatch, useSelector } from 'react-redux';
 import { auth } from '../utlis/firebase';
 import { addUser, removeUser } from '../utlis/userSlice';
-import Browse from './Browse';
-import Initialloading from './Intialloading';
-import Login from './Login';
-import MoviePage from './MoviePage';
-import Profile from './Profile';
+
+import Shimmer from './Shimmer';
 
 export function AppRoutes() {
   const user = useSelector((state) => state.user);
   const creatingAccount = useSelector((state) => state.session.creatingAccount);
   return (
-    <Routes>
-      <Route
-        path="/"
-        element={user ? <Navigate to="/browse" replace /> : <Initialloading />}
-      />
-      <Route
-        path="/login"
-        element={
-          user && !creatingAccount ? (
-            <Navigate to="/browse" replace />
-          ) : (
-            <Login />
-          )
-        }
-      />
-      <Route
-        path="/browse"
-        element={user ? <Browse /> : <Navigate to="/login" replace />}
-      />
-      <Route
-        path="/movie/:movieId"
-        element={user ? <MoviePage /> : <Navigate to="/login" replace />}
-      />
-      <Route
-        path="/profile"
-        element={user ? <Profile /> : <Navigate to="/login" replace />}
-      />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <Suspense fallback={<Shimmer variant="banner" label="Loading page…" />}>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            user ? <Navigate to="/browse" replace /> : <Initialloading />
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            user && !creatingAccount ? (
+              <Navigate to="/browse" replace />
+            ) : (
+              <Login />
+            )
+          }
+        />
+        <Route
+          path="/browse"
+          element={user ? <Browse /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/movie/:movieId"
+          element={user ? <MoviePage /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/profile"
+          element={user ? <Profile /> : <Navigate to="/login" replace />}
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 }
 
@@ -78,15 +79,20 @@ export default function Body() {
         {error}
       </p>
     );
-  if (!ready)
-    return (
-      <p role="status" className="status">
-        Loading your session…
-      </p>
-    );
+  if (!ready) return <Shimmer variant="banner" label="Loading your session…" />;
   return (
     <BrowserRouter>
       <AppRoutes />
     </BrowserRouter>
   );
 }
+
+const Browse = lazy(() => import('./Browse'));
+
+const Initialloading = lazy(() => import('./Intialloading'));
+
+const Login = lazy(() => import('./Login'));
+
+const MoviePage = lazy(() => import('./MoviePage'));
+
+const Profile = lazy(() => import('./Profile'));

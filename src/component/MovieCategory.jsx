@@ -1,10 +1,13 @@
+import { useViewport } from '../hook/useVisibility';
 import { useState } from 'react';
 import useMovieCollection from '../hook/useMovieCollection';
+import { MovieRowShimmer } from './Shimmer';
 import MovieList from './MovieList';
 
-export default function MovieCategory({ title, path, onSelect }) {
+function LoadedCategory({ title, path, onSelect }) {
   const [retry, setRetry] = useState(0);
   const { movies, error } = useMovieCollection(path, retry);
+  if (!movies && !error) return <MovieRowShimmer title={title} />;
   if (movies?.length)
     return <MovieList title={title} movies={movies} onSelect={onSelect} />;
   return (
@@ -28,5 +31,18 @@ export default function MovieCategory({ title, path, onSelect }) {
         </p>
       )}
     </section>
+  );
+}
+
+export default function MovieCategory(props) {
+  const [ref, visible] = useViewport({ once: true, rootMargin: '400px' });
+  return (
+    <div ref={ref}>
+      {visible ? (
+        <LoadedCategory {...props} />
+      ) : (
+        <MovieRowShimmer title={props.title} />
+      )}
+    </div>
   );
 }

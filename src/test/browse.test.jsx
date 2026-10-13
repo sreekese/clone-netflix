@@ -217,6 +217,39 @@ describe('movie browsing', () => {
       await screen.findByRole('button', { name: 'View Arrival' }),
     ).toBeInTheDocument();
   });
+  it('replaces the accessible row shimmer when movies arrive', async () => {
+    let finish;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        () =>
+          new Promise((resolve) => {
+            finish = resolve;
+          }),
+      ),
+    );
+    render(
+      <MovieCategory
+        title="Popular movies"
+        path="/movie/popular"
+        onSelect={vi.fn()}
+      />,
+    );
+    const placeholder = screen.getByRole('status', {
+      name: 'Loading popular movies…',
+    });
+    expect(placeholder).toHaveClass('shimmer-placeholder');
+    expect(within(placeholder).queryByRole('button')).not.toBeInTheDocument();
+    await act(async () => {
+      finish(response([movie]));
+    });
+    expect(
+      screen.queryByRole('status', { name: 'Loading popular movies…' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'View Arrival' }),
+    ).toBeInTheDocument();
+  });
   it('retries an individual category without breaking the catalog', async () => {
     vi.stubGlobal(
       'fetch',

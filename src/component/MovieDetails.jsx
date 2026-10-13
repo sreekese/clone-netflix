@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import useMovieTrailer from '../hook/useMovieTrailer';
 import useMovieDetails from '../hook/useMovieDetails';
-import { IMG_POSTER_URL, IMG_BACKDROP_URL } from '../utlis/constant';
+import {
+  IMG_POSTER_URL,
+  IMG_BACKDROP_URL,
+  backdropSrcSet,
+  posterSrcSet,
+} from '../utlis/constant';
+import Shimmer from './Shimmer';
 import MovieList from './MovieList';
 
 const money = (value) =>
@@ -37,6 +43,9 @@ export default function MovieDetails({ movie, onSelect }) {
         <img
           className="detail-backdrop"
           src={`${IMG_BACKDROP_URL}${info.backdrop_path}`}
+          srcSet={backdropSrcSet(info.backdrop_path)}
+          sizes="100vw"
+          decoding="async"
           alt=""
         />
       )}
@@ -46,6 +55,9 @@ export default function MovieDetails({ movie, onSelect }) {
             <img
               className="detail-poster"
               src={`${IMG_POSTER_URL}${info.poster_path}`}
+              srcSet={posterSrcSet(info.poster_path)}
+              sizes="(max-width: 600px) 95px, 170px"
+              decoding="async"
               alt={`${title} poster`}
             />
           )}
@@ -75,7 +87,9 @@ export default function MovieDetails({ movie, onSelect }) {
           <h2>Story</h2>
           <p>{info.overview || 'No synopsis available.'}</p>
         </section>
-        {loading && <p role="status">Loading movie details…</p>}
+        {loading && (
+          <Shimmer variant="details" label="Loading movie details…" />
+        )}
         {error && (
           <div role="alert">
             <p>{error}</p>
@@ -145,7 +159,7 @@ export default function MovieDetails({ movie, onSelect }) {
         <section className="detail-section">
           <h2>Trailer</h2>
           {trailerLoading ? (
-            <p role="status">Loading trailer…</p>
+            <Shimmer variant="video" label="Loading trailer…" />
           ) : trailer ? (
             <>
               <iframe
@@ -181,6 +195,9 @@ export default function MovieDetails({ movie, onSelect }) {
                       <img
                         loading="lazy"
                         src={`${IMG_POSTER_URL}${person.profile_path}`}
+                        srcSet={posterSrcSet(person.profile_path)}
+                        sizes="115px"
+                        decoding="async"
                         alt={person.name}
                       />
                     ) : (

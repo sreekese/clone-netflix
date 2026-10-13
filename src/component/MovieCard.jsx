@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { IMG_POSTER_URL } from '../utlis/constant';
+import { IMG_POSTER_URL, posterSrcSet } from '../utlis/constant';
 
 export default function MovieCard({ movie, onSelect }) {
   const [failed, setFailed] = useState(false);
@@ -13,6 +13,11 @@ export default function MovieCard({ movie, onSelect }) {
       {movie.poster_path && !failed ? (
         <img
           src={`${IMG_POSTER_URL}${movie.poster_path}`}
+          srcSet={posterSrcSet(movie.poster_path)}
+          sizes="(max-width: 600px) 135px, 165px"
+          width="342"
+          height="513"
+          decoding="async"
           alt=""
           loading="lazy"
           onError={() => setFailed(true)}

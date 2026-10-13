@@ -1,9 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useViewport, usePageVisible } from '../hook/useVisibility';
+import Shimmer from './Shimmer';
 import VideoTitle from './VideoTitle';
 import Videobackground from './Videobackground';
 
 function BannerCarousel({ movies, onSelect, suspended }) {
+  const [bannerRef, inView] = useViewport();
+  const pageVisible = usePageVisible();
+  const active = inView && pageVisible && !suspended;
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(
     () =>
@@ -14,18 +19,19 @@ function BannerCarousel({ movies, onSelect, suspended }) {
   const currentIndex = index % slides.length;
   const movie = slides[currentIndex];
   useEffect(() => {
-    if (paused || focused || suspended || slides.length < 2) return;
+    if (paused || focused || !active || slides.length < 2) return;
     const timer = setInterval(
       () => setIndex((value) => (value + 1) % slides.length),
       30000,
     );
     return () => clearInterval(timer);
-  }, [paused, focused, suspended, slides.length]);
+  }, [paused, focused, active, slides.length]);
   function selectSlide(nextIndex) {
     setIndex(nextIndex);
   }
   return (
     <section
+      ref={bannerRef}
       className="featured"
       aria-label="Featured movie trailers"
       aria-roledescription="carousel"
@@ -38,7 +44,7 @@ function BannerCarousel({ movies, onSelect, suspended }) {
       <Videobackground
         key={movie.id}
         movie={movie}
-        playing={!paused && !suspended}
+        playing={!paused && active}
       />
       <div
         className="banner-slide"
@@ -89,11 +95,7 @@ export default function MainContainer({ onSelect, suspended = false }) {
       </p>
     );
   if (movies === null)
-    return (
-      <p role="status" className="status">
-        Loading movies…
-      </p>
-    );
+    return <Shimmer variant="banner" label="Loading movies…" />;
   if (!movies.length)
     return (
       <p role="status" className="status">

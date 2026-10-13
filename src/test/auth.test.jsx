@@ -180,30 +180,33 @@ describe('authentication form', () => {
 });
 
 describe('session and routing', () => {
-  it('keeps registration visible until profile creation finishes', () => {
+  it('keeps registration visible until profile creation finishes', async () => {
     renderWithStore(<AppRoutes />, '/login?mode=signup', {
       user: { uid: '1' },
       session: { creatingAccount: true, notice: '' },
     });
-    expect(screen.getByRole('form', { name: 'Sign up' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('form', { name: 'Sign up' }),
+    ).toBeInTheDocument();
     expect(screen.queryByText('Movie catalog')).not.toBeInTheDocument();
   });
-  it('shows the landing page and a working registration link', () => {
+  it('shows the landing page and a working registration link', async () => {
     renderWithStore(<AppRoutes />, '/');
-    expect(screen.getByRole('link', { name: /Get started/ })).toHaveAttribute(
-      'href',
-      '/login?mode=signup',
-    );
+    expect(
+      await screen.findByRole('link', { name: /Get started/ }),
+    ).toHaveAttribute('href', '/login?mode=signup');
   });
 
-  it('protects browse from unauthenticated visitors', () => {
+  it('protects browse from unauthenticated visitors', async () => {
     renderWithStore(<AppRoutes />, '/browse');
-    expect(screen.getByRole('form', { name: 'Sign in' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('form', { name: 'Sign in' }),
+    ).toBeInTheDocument();
     expect(screen.queryByText('Movie catalog')).not.toBeInTheDocument();
   });
-  it('redirects authenticated visitors to browse', () => {
+  it('redirects authenticated visitors to browse', async () => {
     renderWithStore(<AppRoutes />, '/login', { user: { uid: '1' } });
-    expect(screen.getByText('Movie catalog')).toBeInTheDocument();
+    expect(await screen.findByText('Movie catalog')).toBeInTheDocument();
   });
   it('restores sessions and unsubscribes on unmount', async () => {
     let listener;
@@ -218,8 +221,11 @@ describe('session and routing', () => {
         <Body />
       </Provider>,
     );
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'Loading your session',
+    expect(
+      screen.getByRole('status', { name: 'Loading your session…' }),
+    ).toHaveClass('shimmer-banner');
+    expect(screen.getByText('Loading your session…')).toHaveClass(
+      'visually-hidden',
     );
     act(() => listener({ uid: '1', email: 'a@b.com', displayName: 'Viewer' }));
     expect(await screen.findByText('Movie catalog')).toBeInTheDocument();
@@ -245,16 +251,18 @@ describe('session and routing', () => {
     expect(button).toHaveAttribute('aria-expanded', 'false');
     expect(button).toHaveFocus();
   });
-  it('protects direct movie URLs from unauthenticated visitors', () => {
+  it('protects direct movie URLs from unauthenticated visitors', async () => {
     renderWithStore(<AppRoutes />, '/movie/123');
-    expect(screen.getByRole('form', { name: 'Sign in' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('form', { name: 'Sign in' }),
+    ).toBeInTheDocument();
   });
-  it('shows account information on the profile page', () => {
+  it('shows account information on the profile page', async () => {
     renderWithStore(<AppRoutes />, '/profile', {
       user: { uid: '1', email: 'viewer@example.com', displayName: 'Viewer' },
     });
     expect(
-      screen.getByRole('heading', { name: 'My profile' }),
+      await screen.findByRole('heading', { name: 'My profile' }),
     ).toBeInTheDocument();
     expect(screen.getByText('viewer@example.com')).toBeInTheDocument();
   });

@@ -1,4 +1,5 @@
-import { IMG_BACKDROP_URL } from '../utlis/constant';
+import { IMG_BACKDROP_URL, backdropSrcSet } from '../utlis/constant';
+import Shimmer from './Shimmer';
 import useMovieTrailer from '../hook/useMovieTrailer';
 
 export default function Videobackground({ movie, playing }) {
@@ -9,6 +10,10 @@ export default function Videobackground({ movie, playing }) {
         <img
           className="featured-backdrop"
           src={`${IMG_BACKDROP_URL}${movie.backdrop_path}`}
+          srcSet={backdropSrcSet(movie.backdrop_path)}
+          sizes="100vw"
+          fetchPriority="high"
+          decoding="async"
           alt=""
         />
       ) : (
@@ -24,7 +29,12 @@ export default function Videobackground({ movie, playing }) {
           tabIndex={-1}
         />
       )}
-      {!trailer && (
+      {loading && (
+        <div className="banner-preview-loading">
+          <Shimmer variant="video" label="Loading preview…" />
+        </div>
+      )}
+      {!trailer && !loading && (
         <p className="banner-video-status">
           {loading
             ? 'Loading preview…'

@@ -1,3 +1,4 @@
+import { cachedRequest } from './requestCache';
 import { API_OPTIONS, TMDB_API_BASE_URL } from '../utlis/constant';
 
 async function requestMovieData(path, signal) {
@@ -10,10 +11,16 @@ async function requestMovieData(path, signal) {
 }
 
 export async function fetchMovieData(path, signal) {
-  const data = await requestMovieData(path, signal);
-  if (!Array.isArray(data.results))
-    throw new Error('The movie service returned an invalid response.');
-  return data.results;
+  return cachedRequest(
+    path,
+    async (sharedSignal) => {
+      const data = await requestMovieData(path, sharedSignal);
+      if (!Array.isArray(data.results))
+        throw new Error('The movie service returned an invalid response.');
+      return data.results;
+    },
+    signal,
+  );
 }
 
 export function selectTrailer(videos) {
@@ -30,11 +37,15 @@ export function selectTrailer(videos) {
 }
 
 export async function fetchMovieDetails(movieId, signal) {
-  const data = await requestMovieData(
-    `/movie/${movieId}?append_to_response=credits,recommendations,similar&language=en-US`,
+  const path = `/movie/${movieId}?append_to_response=credits,recommendations,similar&language=en-US`;
+  return cachedRequest(
+    path,
+    async (sharedSignal) => {
+      const data = await requestMovieData(path, sharedSignal);
+      if (!data || data.id !== movieId || typeof data.title !== 'string')
+        throw new Error('Movie details are unavailable.');
+      return data;
+    },
     signal,
   );
-  if (!data || data.id !== movieId || typeof data.title !== 'string')
-    throw new Error('Movie details are unavailable.');
-  return data;
 }
