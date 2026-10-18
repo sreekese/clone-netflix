@@ -32,10 +32,6 @@ export default function Browse() {
         )}
         <SecondaryContainer onSelect={openMovie} />
       </main>
-      <footer>
-        Movie data provided by TMDB. This is a demo project and is not
-        affiliated with TMDB. All rights reserved.
-      </footer>
     </>
   );
 }

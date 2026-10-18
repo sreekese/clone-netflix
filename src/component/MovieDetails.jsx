@@ -215,14 +215,6 @@ export default function MovieDetails({ movie, onSelect }) {
             )}
           </section>
         )}
-        <a
-          className="text-button"
-          href={`https://www.themoviedb.org/movie/${selected.id}`}
-          target="_blank"
-          rel="noreferrer"
-        >
-          View on TMDB ↗
-        </a>
         {details &&
           (related?.length ? (
             <MovieList
